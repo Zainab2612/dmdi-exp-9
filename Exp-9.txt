@@ -1,0 +1,43 @@
+import pandas as pd
+
+class NaiveBayesClassifier:
+    def _init_(self, data):
+        self.data = data
+        self.classes = set(data['Play'].values)
+
+    def calculate_probability(self, attribute, value, given_class):
+        class_data = self.data[self.data['Play'] == given_class]
+        attribute_data = class_data[class_data[attribute] == value]
+        count_attribute_given_class = len(attribute_data)
+        count_class = len(class_data)
+        probability = count_attribute_given_class / count_class
+        return probability
+
+    def predict(self, Outlook, Temperature, Humidity, Windy):
+        probabilities = []
+
+        for given_class in self.classes:
+            # Calculate P(Outlook|Class) * P(Temp|Class) * P(Humidity|Class) * P(Windy|Class) * P(Class)
+            probability = (
+                self.calculate_probability('Outlook', Outlook, given_class) *
+                self.calculate_probability('Temperature', Temperature, given_class) *
+                self.calculate_probability('Humidity', Humidity, given_class) *
+                self.calculate_probability('Windy', Windy, given_class) *
+                len(self.data[self.data['Play'] == given_class]) / len(self.data)
+            )
+            probabilities.append((given_class, probability))
+
+        # Choose the class with the highest probability
+        result_class = max(probabilities, key=lambda x: x[1])[0]
+        return result_class
+
+# Read data from CSV file
+file_path = 'golf_df.csv'
+df = pd.read_csv(file_path)
+
+# Create and train the Naive Bayes classifier
+classifier = NaiveBayesClassifier(df)
+
+# Make a prediction for the given conditions
+prediction = classifier.predict('rainy', 'hot', 'normal', True)
+print(f"The predicted class is: {prediction}")
